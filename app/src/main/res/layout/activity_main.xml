@@ -1,0 +1,85 @@
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    android:background="@mipmap/robot"
+    android:gravity="center"
+    android:orientation="vertical"
+    tools:context="com.xianliaoRobot.activity.MainActivity">
+
+    <android.support.v7.widget.Toolbar
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content">
+
+        <RelativeLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:paddingLeft="10dp"
+            android:paddingRight="10dp">
+
+            <TextView
+                android:id="@+id/main_setting"
+                android:layout_width="wrap_content"
+                android:layout_height="wrap_content"
+                android:layout_alignParentTop="true"
+                android:background="@drawable/bg_main_btn_setting_shage"
+                android:text="设置"
+                android:textColor="@color/main_gold" />
+
+        </RelativeLayout>
+
+    </android.support.v7.widget.Toolbar>
+
+    <Button
+        android:id="@+id/start"
+        style="@style/Widget.AppCompat.Button.ButtonBar.AlertDialog"
+        android:layout_width="80dp"
+        android:layout_height="50dp"
+        android:text="设置"
+        android:textColor="@android:color/white"
+        android:textSize="15sp" />
+    <Button
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:onClick="publish"
+        android:text="publish"/>
+    <Button
+        android:id="@+id/startXianLiao"
+        style="@style/Widget.AppCompat.Button.ButtonBar.AlertDialog"
+        android:layout_width="80dp"
+        android:layout_height="50dp"
+        android:text="开始"
+        android:textColor="@android:color/white"
+        android:textSize="15sp" />
+    <TextView
+        android:id="@+id/main_disable_server"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_marginLeft="20dp"
+        android:layout_marginRight="20dp"
+        android:layout_marginTop="50dp"
+        android:background="@color/main_gold"
+        android:padding="10dp"
+        android:text="为了抢红包的正常运行，请点击这里到设置-辅助服务-开启抢红包服务"
+        android:textColor="#f26049"
+        android:visibility="gone" />
+
+    <TextView
+        android:id="@+id/main_enable_state"
+        android:layout_width="match_parent"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal"
+        android:gravity="center_horizontal"
+        android:text="抢红包进行中。。。。"
+        android:layout_marginTop="50dp"
+        android:textSize="18sp"
+        android:visibility="gone" />
+
+    <ImageView
+        android:id="@+id/main_actionEnable"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_gravity="center_horizontal" />
+
+</LinearLayout>

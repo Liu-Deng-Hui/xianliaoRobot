@@ -1,0 +1,11 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- 关键是android:accessibilityEventTypes="typeAllMask"， typeAllMask代表监听所有的事件，这边不写的话，AccessibilityService就接收不到 -->
+<accessibility-service xmlns:android="http://schemas.android.com/apk/res/android"
+    android:accessibilityEventTypes="typeAllMask"
+    android:accessibilityFeedbackType="feedbackGeneric"
+    android:accessibilityFlags="flagRequestFilterKeyEvents"
+    android:canRetrieveWindowContent="true"
+    android:canRequestFilterKeyEvents="true"
+    android:description="@string/accessibility_xianliao"
+    android:notificationTimeout="1000"
+    android:packageNames="org.xianliao,com.xianliaoRobot" />
