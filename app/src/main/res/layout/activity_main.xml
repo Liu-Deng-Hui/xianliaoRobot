@@ -39,11 +39,12 @@
         android:text="设置"
         android:textColor="@android:color/white"
         android:textSize="15sp" />
+
     <Button
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:onClick="publish"
-        android:text="publish"/>
+        android:text="publish" />
     <Button
         android:id="@+id/startXianLiao"
         style="@style/Widget.AppCompat.Button.ButtonBar.AlertDialog"

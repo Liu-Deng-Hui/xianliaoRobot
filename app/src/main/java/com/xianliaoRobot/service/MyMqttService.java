@@ -59,8 +59,7 @@ public class MyMqttService extends Service {
     public static  String             PUBLISH_TOPIC  = "tourist_enter";//发布主题
     public static  String             RESPONSE_TOPIC = "message_arrived";//响应主题
     @SuppressLint("MissingPermission")
-    public         String             CLIENTID       = Build.VERSION.SDK_INT >= Build.VERSION_CODES.O
-            ? Build.getSerial() : Build.SERIAL;//客户端ID，一般以客户端唯一标识符表示，这里用设备序列号表示
+    public         String             CLIENTID       = "56564454545664564";//客户端ID，一般以客户端唯一标识符表示，这里用设备序列号表示
 
     @Override
     public int onStartCommand(Intent intent, int flags, int startId) {
@@ -74,6 +73,12 @@ public class MyMqttService extends Service {
         return null;
     }
 
+    /**
+     * 开启服务
+     */
+    public static void startService(Context mContext) {
+        mContext.startService(new Intent(mContext, MyMqttService.class));
+    }
     /**
      * 发布 （模拟其他客户端发布消息）
      *

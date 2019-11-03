@@ -30,4 +30,6 @@ dependencies {
     implementation files('libs/smoothcompoundbuttonlibrary.jar')
     compile 'com.arialyy.aria:aria-core:3.6.6'
     annotationProcessor 'com.arialyy.aria:aria-compiler:3.6.6'
+    implementation 'com.android.support:design:+'
+    implementation 'com.lzy.net:okgo:3.0.4'
 }

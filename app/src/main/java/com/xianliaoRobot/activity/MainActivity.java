@@ -2,7 +2,9 @@ package com.xianliaoRobot.activity;
 
 import android.Manifest;
 import android.app.Activity;
+import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.media.MediaScannerConnection;
 import android.net.Uri;
@@ -12,14 +14,22 @@ import android.support.v4.app.ActivityCompat;
 import android.support.v7.app.ActionBar;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.telecom.Call;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.Button;
+import android.widget.EditText;
 import android.widget.Toast;
 
 import com.arialyy.annotations.Download;
 import com.arialyy.aria.core.Aria;
 import com.arialyy.aria.core.download.DownloadTask;
+import com.lzy.okgo.OkGo;
+import com.lzy.okgo.cache.CacheMode;
+import com.lzy.okgo.callback.StringCallback;
+import com.lzy.okgo.model.HttpParams;
+import com.lzy.okgo.model.Response;
 import com.xianliaoRobot.MyApplication;
 import com.xianliaoRobot.R;
 import com.xianliaoRobot.entity.data;
@@ -28,85 +38,101 @@ import com.xianliaoRobot.permission.PermissionConstants;
 import com.xianliaoRobot.permission.PermissionUtils;
 import com.xianliaoRobot.service.MyMqttService;
 
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.io.File;
+import java.util.HashMap;
 import java.util.List;
 
 
 public class MainActivity extends AppCompatActivity {
     private static final int REQUEST_EXTERNAL_STORAGE = 1;
-    private static String[] PERMISSIONS_STORAGE = {Manifest.permission.READ_EXTERNAL_STORAGE,Manifest.permission.WRITE_EXTERNAL_STORAGE };
+    private static String[] PERMISSIONS_STORAGE = {Manifest.permission.READ_EXTERNAL_STORAGE, Manifest.permission.WRITE_EXTERNAL_STORAGE};
     private String TAG = this.getClass().getSimpleName();
     private Intent mIntent;
+    private String url = "http://h2.frp.fztool.com/api/";
+    private String user;
+    private String pwd;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
+        setContentView(R.layout.activity_login);
         requestPermission();
         verifyStoragePermissions(this);
+        SharedPreferences sharedPre=getSharedPreferences("config", MODE_PRIVATE);
+        int login = sharedPre.getInt("login",-1);
+        if(login==0){
+            Intent intent=new Intent();
+            intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK);
+            intent.setClass(MainActivity.this,RobotActivity.class);
+            startActivity(intent);
+        }
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.hide();
         }
-        final Button btn = findViewById(R.id.start);
-        final Button XiaLiao =findViewById(R.id.startXianLiao);
-        //开启服务
-       // startService(new Intent(MainActivity.this, MyMqttService.class));
-        btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //打开系统设置中辅助功能
-                Intent intent = new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS);
-                startActivity(intent);
-                Toast.makeText(MainActivity.this, "找到闲聊机器人服务，开启即可", Toast.LENGTH_LONG).show();
-            }
-        });
-        XiaLiao.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                toXiaLiao();
-            }
-        });
     }
-    public void publish(View view) {
-        //模拟闸机设备发送消息过来
-       // MyMqttService.publish("tourist enter");
-        /*new Thread(connectNet).start();
-        new Thread(saveFileRunnable).start();*/
 
-
-
-        File file = new File(Environment.getExternalStorageDirectory() + "/DCIM/100ANDRO/"+data.getTitle());
-        // 最后通知图库更新
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.KITKAT) { // 判断SDK版本是不是4.4或者高于4.4
-            String[] paths = new String[]{file.getAbsolutePath()};
-            MediaScannerConnection.scanFile(MyApplication.getContext(), paths, null, null);
-        } else {
-            final Intent intent;
-            if (file.isDirectory()) {
-                intent = new Intent(Intent.ACTION_MEDIA_MOUNTED);
-                intent.setClassName("com.android.providers.media", "com.android.providers.media.MediaScannerReceiver");
-                intent.setData(Uri.fromFile(Environment.getExternalStorageDirectory()));
-            } else {
-                intent = new Intent(Intent.ACTION_MEDIA_SCANNER_SCAN_FILE);
-                intent.setData(Uri.fromFile(file));
-            }
-            MyApplication.getContext().sendBroadcast(intent);
+    public void login(View view) throws JSONException {
+        EditText editText1 = (EditText) findViewById(R.id.login_user_edit);
+        user = editText1.getText().toString();
+        EditText editText2 = (EditText) findViewById(R.id.login_passwd_edit);
+        pwd = editText2.getText().toString();
+        if (user.equals("") || pwd == null) {
+            Toast.makeText(MainActivity.this, "账号不能为空，请填写账号！", Toast.LENGTH_LONG).show();
         }
-
-    }
-
-    @Download.onTaskComplete void taskComplete(DownloadTask task) {
-        //在这里处理任务完成的状态
-        Log.i(TAG, "下载完成 ：" +Environment.getExternalStorageDirectory());
-    }
-    void toXiaLiao(){
-        if (!checkPackage("org.xianliao")){
-            Toast.makeText(MainActivity.this, "请先安装指定应用！", Toast.LENGTH_LONG).show();
+        if (pwd.equals("") || pwd == null) {
+            Toast.makeText(MainActivity.this, "密码不能为空，请填写密码！", Toast.LENGTH_LONG).show();
         }
-        Intent intent = new Intent();
-        intent.setAction("Android.intent.action.VIEW");
-        intent.setClassName("org.xianliao", "org.sugram.base.LaunchActivity");
-        startActivity(intent);
+        TelephonyManager tm = (TelephonyManager) MyApplication.getContext().getSystemService(Context.TELEPHONY_SERVICE);
+        if (ActivityCompat.checkSelfPermission(MyApplication.getContext(), Manifest.permission.READ_PHONE_STATE) != PackageManager.PERMISSION_GRANTED) {
+            return;
+        }
+        String imei = tm.getDeviceId();
+        HashMap params = new HashMap();
+        params.put("user", user);
+        params.put("pwd", pwd);
+        params.put("imei", imei);
+        JSONObject json = new JSONObject(params);
+        OkGo.<String>post(url+"login")
+                .tag(this)
+                .upJson(json)
+                .execute(new StringCallback() {
+                    @Override
+                    public void onSuccess(Response<String> response) {
+                        try {
+                            JSONObject info = new JSONObject(response.body().toString());
+                            if(info.getInt("code")==0){
+                                SharedPreferences sharedPre=MyApplication.getContext().getSharedPreferences("config", MyApplication.getContext().MODE_PRIVATE);
+                                SharedPreferences.Editor editor=sharedPre.edit();
+                                editor.putString("user",user);
+                                editor.putString("pwd",pwd);
+                                editor.putInt("login",0);
+                                //提交
+                                editor.commit();
+                                Toast.makeText(MainActivity.this, "登录成功！", Toast.LENGTH_LONG).show();
+                                Intent intent=new Intent();
+                                intent.setFlags(Intent.FLAG_ACTIVITY_CLEAR_TASK|Intent.FLAG_ACTIVITY_NEW_TASK);
+                                intent.setClass(MainActivity.this,RobotActivity.class);
+                                startActivity(intent);
+
+                            }else{
+                                Toast.makeText(MainActivity.this, info.getString("msg"), Toast.LENGTH_LONG).show();
+                            }
+                        } catch (JSONException e) {
+                            e.printStackTrace();
+                            Toast.makeText(MainActivity.this, "登录失败！", Toast.LENGTH_LONG).show();
+                        }
+
+                    }
+                    @Override
+                    public void onError(Response<String> response) {
+                        Toast.makeText(MainActivity.this, "登录失败，请检查网络！", Toast.LENGTH_LONG).show();
+                        super.onError(response);
+                    }
+                });
     }
     public boolean checkPackage(String packageName)
     {

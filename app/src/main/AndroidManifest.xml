@@ -11,12 +11,10 @@
     <uses-permission android:name="android.permission.READ_PHONE_STATE"/>
     <protected-broadcast android:name="android.intent.action.MEDIA_MOUNTED" />
     <!--Aria一行下载权限-->
-
-
     <application
         android:name=".MyApplication"
         android:allowBackup="true"
-        android:icon="@mipmap/ic_launcher"
+        android:icon="@drawable/ic_launcher"
         android:label="@string/app_name"
         android:roundIcon="@mipmap/ic_launcher_round"
         android:supportsRtl="true"
@@ -28,6 +26,15 @@
                 <category android:name="android.intent.category.DEFAULT"/>
             </intent-filter>
         </activity>
+        <activity
+            android:name="com.xianliaoRobot.activity.RobotActivity"
+            android:label="@string/app_name" >
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN" />
+                <category android:name="android.intent.category.LAUNCHER" />
+            </intent-filter>
+        </activity>
+
         <service
             android:enabled="true"
             android:exported="true"
@@ -45,7 +52,7 @@
         <activity
             android:name="com.xianliaoRobot.permission.PermissionUtils$PermissionActivity"
             android:configChanges="orientation|keyboardHidden|screenSize"
-            android:multiprocess="true"
+            android:multiprocess="false"
             android:theme="@style/ActivityTransparent"
             android:windowSoftInputMode="stateHidden|stateAlwaysHidden"/>
         <!-- Mqtt Service -->

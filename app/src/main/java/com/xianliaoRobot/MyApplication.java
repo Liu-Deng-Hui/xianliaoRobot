@@ -4,7 +4,6 @@ import android.app.Application;
 import android.content.Context;
 
 import com.arialyy.aria.core.Aria;
-import com.xianliaoRobot.utils.SettingConfig;
 
 
 /**
