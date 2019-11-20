@@ -2,8 +2,8 @@ package com.xianliaoRobot.activity;
 
 import android.Manifest;
 import android.app.Activity;
-import android.content.Context;
 import android.content.Intent;
+import android.content.SharedPreferences;
 import android.content.pm.PackageManager;
 import android.os.Bundle;
 import android.support.v4.app.ActivityCompat;
@@ -13,6 +13,8 @@ import android.util.Log;
 import android.view.View;
 import android.widget.Button;
 import android.widget.Toast;
+
+import com.xianliaoRobot.MyApplication;
 import com.xianliaoRobot.R;
 import com.xianliaoRobot.permission.DialogHelper;
 import com.xianliaoRobot.permission.PermissionConstants;
@@ -34,41 +36,62 @@ public class RobotActivity extends AppCompatActivity {
         setContentView(R.layout.activity_main);
         requestPermission();
         verifyStoragePermissions(this);
-        MyMqttService.startService(this); //开启服务
         ActionBar actionBar = getSupportActionBar();
         if (actionBar != null) {
             actionBar.hide();
         }
-        final Button btn = findViewById(R.id.start);
-        final Button XiaLiao =findViewById(R.id.startXianLiao);
-        //开启服务
-        // startService(new Intent(MainActivity.this, MyMqttService.class));
-        btn.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                //打开系统设置中辅助功能
-                Intent intent = new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS);
-                startActivity(intent);
-                Toast.makeText(RobotActivity.this, "找到闲聊机器人服务，开启即可", Toast.LENGTH_LONG).show();
-            }
-        });
-        XiaLiao.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View v) {
-                toXiaLiao();
-            }
-        });
     }
 
-    void toXiaLiao(){
+    /**
+     * 开始设置
+     * @param view
+     */
+    public void seting(View view){
+        //打开系统设置中辅助功能
+        Intent intent = new Intent(android.provider.Settings.ACTION_ACCESSIBILITY_SETTINGS);
+        startActivity(intent);
+        Toast.makeText(this,"找到闲聊机器人服务，开启即可",Toast.LENGTH_LONG).show();
+    }
+
+    /***
+     * 跳转开始进行辅助
+     * @param v
+     */
+    public void go(View v) {
         if (!checkPackage("org.xianliao")){
-            Toast.makeText(RobotActivity.this, "请先安装指定应用！", Toast.LENGTH_LONG).show();
+            Toast.makeText(this,"请先安装指定应用！",Toast.LENGTH_LONG).show();
         }
         Intent intent = new Intent();
         intent.setAction("Android.intent.action.VIEW");
         intent.setClassName("org.xianliao", "org.sugram.base.LaunchActivity");
         startActivity(intent);
     }
+    /***
+     * 清除账号信息
+     * @param view
+     */
+    public void clear(View view){
+        //清空账号信息
+        SharedPreferences preferences = MyApplication.getContext().getSharedPreferences("config", MyApplication.getContext().MODE_PRIVATE);
+        SharedPreferences.Editor editor = preferences.edit();
+        editor.clear();
+        editor.commit();
+        Toast.makeText(this,"账号信息已清空！",Toast.LENGTH_LONG).show();
+        //停止服务
+        Intent MyMqtt = new Intent(RobotActivity.this, MyMqttService.class);
+        startService(MyMqtt);
+        //跳转新页面
+        Intent intent = new Intent();
+        intent.setAction("Android.intent.action.VIEW");
+        intent.setClassName("com.xianliaoRobot", "com.xianliaoRobot.activity.MainActivity");
+        startActivity(intent);
+    }
+
+    /***
+     * 检测有没有闲聊app
+     * @param packageName
+     * @return
+     */
     public boolean checkPackage(String packageName)
     {
         if (packageName == null || "".equals(packageName))
@@ -97,10 +120,10 @@ public class RobotActivity extends AppCompatActivity {
                     }
                 })
                 .callback(new PermissionUtils.FullCallback() {
+                    //权限申请成功后开启mqtt服务
                     @Override
                     public void onGranted(List<String> permissionsGranted) {
                         mIntent = new Intent(RobotActivity.this, MyMqttService.class);
-                        //开启服务
                         startService(mIntent);
                     }
 
@@ -116,12 +139,19 @@ public class RobotActivity extends AppCompatActivity {
                 .request();
     }
 
+    /***
+     * 停止服务
+     */
     @Override
     protected void onDestroy() {
         super.onDestroy();
-        //停止服务
         stopService(mIntent);
     }
+
+    /***
+     * 相关权限
+     * @param activity
+     */
     public static void verifyStoragePermissions(Activity activity) {
           // Check if we have write permission
           int permission = ActivityCompat.checkSelfPermission(activity,

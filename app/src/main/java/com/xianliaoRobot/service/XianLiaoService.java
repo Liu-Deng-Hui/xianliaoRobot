@@ -5,8 +5,9 @@ import android.app.NotificationManager;
 import android.content.ClipData;
 import android.content.ClipboardManager;
 import android.content.Context;
+import android.content.Intent;
+import android.content.SharedPreferences;
 import android.os.Build;
-import android.os.Environment;
 import android.support.annotation.RequiresApi;
 import android.util.Log;
 import android.view.accessibility.AccessibilityEvent;
@@ -15,7 +16,9 @@ import android.widget.Toast;
 
 import com.xianliaoRobot.entity.data;
 
-import java.io.File;
+import org.json.JSONException;
+import org.json.JSONObject;
+
 import java.util.List;
 
 import static android.content.ContentValues.TAG;
@@ -26,7 +29,7 @@ public class XianLiaoService extends AccessibilityService {
     @Override
     public void onAccessibilityEvent(AccessibilityEvent event) {
         final int eventType = event.getEventType();
-       printEventLog(event);
+        printEventLog(event);
         if(eventType == AccessibilityEvent.TYPE_NOTIFICATION_STATE_CHANGED){
             Log.d(TAG, "检测到通知信息");
             Log.d(TAG, "聊天标志位："+liaoTian);
@@ -58,11 +61,10 @@ public class XianLiaoService extends AccessibilityService {
                 }
             }
         }
-        if(eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
-            //判断是否是登录后的指导界面
+        if(eventType == AccessibilityEvent.TYPE_WINDOW_CONTENT_CHANGED){
             if ("org.sugram.dao.common.GuideActivity".equals(event.getClassName())) {
                 liaoTian =0;
-                Log.d(TAG, "登录后首次启动界面");
+                Log.d(TAG, "引导【一】界面");
                 //拿到根节点
                 AccessibilityNodeInfo nodeInfo = getRootInActiveWindow();
                 if (nodeInfo == null) {
@@ -77,7 +79,31 @@ public class XianLiaoService extends AccessibilityService {
                     Log.d(TAG, "进行跳过");
                     if (parent != null) {
                         info.performAction(AccessibilityNodeInfo.ACTION_CLICK);
-                        break;
+                        return;
+                    }
+                }
+            }
+        }
+        if(eventType == AccessibilityEvent.TYPE_WINDOW_STATE_CHANGED) {
+            //判断是否是登录后的指导界面
+            if ("org.sugram.dao.common.GuideActivity".equals(event.getClassName())) {
+                liaoTian =0;
+                Log.d(TAG, "引导【二】界面");
+                //拿到根节点
+                AccessibilityNodeInfo nodeInfo = getRootInActiveWindow();
+                if (nodeInfo == null) {
+                    return;
+                }
+                List<AccessibilityNodeInfo> list = nodeInfo.findAccessibilityNodeInfosByText("跳过");
+                if (list.isEmpty()) {
+                    return;
+                }
+                for (AccessibilityNodeInfo info : list) {
+                    AccessibilityNodeInfo parent = info.getParent();
+                    Log.d(TAG, "进行跳过");
+                    if (parent != null) {
+                        info.performAction(AccessibilityNodeInfo.ACTION_CLICK);
+                        return;
                     }
                 }
             }
@@ -85,6 +111,7 @@ public class XianLiaoService extends AccessibilityService {
             if ("org.sugram.dao.login.LoginActivity".equals(event.getClassName())) {
                     liaoTian =0;
                     Log.d(TAG, "登录页面");
+                    SharedPreferences sharedPre=getSharedPreferences("config", MODE_PRIVATE);
                     //拿到根节点
                     AccessibilityNodeInfo nodeInfo = getRootInActiveWindow();
                     if (nodeInfo == null) {
@@ -99,14 +126,21 @@ public class XianLiaoService extends AccessibilityService {
                         AccessibilityNodeInfo parent = info.getParent();
                         Log.d(TAG, "输入账号");
                         if (parent != null) {
-                            ClipboardManager clipboard = (ClipboardManager)this.getSystemService(Context.CLIPBOARD_SERVICE);
-                            ClipData clip = ClipData.newPlainText("text", "15225687370");
-                            clipboard.setPrimaryClip(clip);
-                            //焦点（n是AccessibilityNodeInfo对象）
-                            info.performAction(AccessibilityNodeInfo.ACTION_FOCUS);
-                            ////粘贴进入内容
-                            info.performAction(AccessibilityNodeInfo.ACTION_PASTE);
-                            break;
+                            try {
+                                ClipboardManager clipboard = (ClipboardManager)this.getSystemService(Context.CLIPBOARD_SERVICE);
+                                JSONObject robot = new JSONObject(sharedPre.getString("robot",""));
+                                String xlnumber = robot.getString("xlnumber");
+                                ClipData clip = ClipData.newPlainText("text", xlnumber);
+                                clipboard.setPrimaryClip(clip);
+                                //焦点（n是AccessibilityNodeInfo对象）
+                                info.performAction(AccessibilityNodeInfo.ACTION_FOCUS);
+                                ////粘贴进入内容
+                                info.performAction(AccessibilityNodeInfo.ACTION_PASTE);
+                                break;
+                            } catch (JSONException e) {
+                                e.printStackTrace();
+                                break;
+                            }
                         }
                     }
                     //查找密码按钮
@@ -118,14 +152,21 @@ public class XianLiaoService extends AccessibilityService {
                         AccessibilityNodeInfo parent = info.getParent();
                         Log.d(TAG, "输入密码");
                             if (parent != null) {
+                                try {
                                 ClipboardManager clipboard = (ClipboardManager)this.getSystemService(Context.CLIPBOARD_SERVICE);
-                                ClipData clip = ClipData.newPlainText("text", "123456");
+                                JSONObject robot = new JSONObject(sharedPre.getString("robot",""));
+                                String xlpassword = robot.getString("xlpassword");
+                                ClipData clip = ClipData.newPlainText("text", xlpassword);
                                 clipboard.setPrimaryClip(clip);
                                 //焦点（n是AccessibilityNodeInfo对象）
                                 info.performAction(AccessibilityNodeInfo.ACTION_FOCUS);
                                 ////粘贴进入内容
                                 info.performAction(AccessibilityNodeInfo.ACTION_PASTE);
                                 break;
+                                } catch (JSONException e) {
+                                    e.printStackTrace();
+                                    break;
+                                }
                             }
                         }
                      //查找登录
@@ -333,12 +374,16 @@ public class XianLiaoService extends AccessibilityService {
     @Override
     public void onInterrupt() {
         Toast.makeText(this, "闲聊机器人服务已关闭", Toast.LENGTH_SHORT).show();
+        Intent mIntent = new Intent(XianLiaoService.this, MyMqttService.class);
+        stopService(mIntent);
     }
 
     @Override
     protected void onServiceConnected() {
         super.onServiceConnected();
         Toast.makeText(this, "闲聊机器人服务已开启", Toast.LENGTH_SHORT).show();
+        Intent mIntent = new Intent(XianLiaoService.this, MyMqttService.class);
+        startService(mIntent);
     }
     private void printEventLog(AccessibilityEvent event) {
         Log.i(TAG, "-------------------------------------------------------------");
